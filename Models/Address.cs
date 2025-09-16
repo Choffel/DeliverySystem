@@ -1,0 +1,12 @@
+namespace DeliverySystem.Models
+{
+    public class Address
+    {
+        public int Id { get; set; }
+        public string City { get; set; }
+        public string Street { get; set; }
+        public string House { get; set; }
+        public string Apartment { get; set; }
+        // ...можно добавить координаты
+    }
+}
