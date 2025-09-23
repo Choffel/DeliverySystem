@@ -1,3 +1,4 @@
+using DeliverySystem.DTOs;
 using DeliverySystem.Models;
 using DeliverySystem.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,9 +17,21 @@ public class CourierController : ControllerBase
     
     
     [HttpPost("/couriers")]
-    public async Task<IActionResult> AddCourierAsync([FromBody] Courier courier)
+    public async Task<IActionResult> AddCourierAsync([FromBody] CourierDto courierDto)
     {
+        var courier = new Courier
+        {
+            Name = courierDto.Name,
+            Phone = courierDto.Phone
+        };
         await _courierService.AddCourierAsync(courier);
+        return Ok();
+    }
+
+    [HttpGet("/couriers")]
+    public async Task<IActionResult> GetAllCouriersAsync()
+    {
+        await _courierService.GetAllCouriersAsync();
         return Ok();
     }
 }

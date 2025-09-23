@@ -25,6 +25,13 @@ builder.Services.AddScoped<CourierService>();
 
 var app = builder.Build();
 
+// Автоматически применяем миграции при запуске приложения
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
