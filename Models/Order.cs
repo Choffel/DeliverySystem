@@ -14,6 +14,6 @@ namespace DeliverySystem.Models
         
         public DateTime CreatedAt { get; set; }
         
-        public DeliveryStatus Status { get; set; } // Статус доставки
+        public DeliveryStatus Status { get; set; } 
     }
 }
