@@ -11,4 +11,5 @@ public class ApplicationDbContext : DbContext
         
     }
     public DbSet<Courier> Couriers { get; set; }
+    public DbSet<Order> Orders { get; set; }
 }

@@ -1,8 +1,10 @@
+using DeliverySystem.Enums;
+
 namespace DeliverySystem.Models
 {
     public class Order
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         
         public int CustomerId { get; set; }
         
@@ -11,6 +13,7 @@ namespace DeliverySystem.Models
         public int AddressId { get; set; }
         
         public DateTime CreatedAt { get; set; }
+        
+        public DeliveryStatus Status { get; set; } // Статус доставки
     }
 }
-

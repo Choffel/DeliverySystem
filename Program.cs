@@ -1,3 +1,4 @@
+using DeliverySystem.Abstractions;
 using DeliverySystem.Data;
 using DeliverySystem.Services;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<CourierService>();
+builder.Services.AddScoped<ICourierService, CourierService>();
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 
 var app = builder.Build();
 
