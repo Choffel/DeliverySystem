@@ -7,8 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Теперь строка подключения берётся из appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Для отладки
-Console.WriteLine($"Строка подключения к БД: {connectionString}");
 
 // Add services to the container.
 
@@ -25,7 +23,7 @@ builder.Services.AddScoped<CourierService>();
 
 var app = builder.Build();
 
-// Автоматически применяем миграции при запуске приложения
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

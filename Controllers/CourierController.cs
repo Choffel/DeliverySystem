@@ -31,7 +31,8 @@ public class CourierController : ControllerBase
     [HttpGet("/couriers")]
     public async Task<IActionResult> GetAllCouriersAsync()
     {
-        await _courierService.GetAllCouriersAsync();
-        return Ok();
+      var couriers = await _courierService.GetAllCouriersAsync();
+      
+      return Ok(couriers);
     }
 }
