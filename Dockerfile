@@ -7,7 +7,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["DeliverySystem/DeliverySystem.csproj", "DeliverySystem/"]
+COPY DeliverySystem/DeliverySystem.csproj DeliverySystem/
 RUN dotnet restore "DeliverySystem/DeliverySystem.csproj"
 COPY . .
 WORKDIR "/src/DeliverySystem"
