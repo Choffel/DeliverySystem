@@ -1,55 +1,70 @@
-using DeliverySystem.Models;
 using DeliverySystem.Abstractions;
+using DeliverySystem.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace DeliverySystem.Controllers;
 
 [ApiController]
-[Route("api/delivery")]
+[Route("api/orders")] // Базовый маршрут
 public class DeliveryController : ControllerBase
 {
     private readonly IDeliveryService _deliveryService;
+
     public DeliveryController(IDeliveryService deliveryService)
     {
         _deliveryService = deliveryService;
     }
 
+    
     [HttpPost]
-    public async Task<IActionResult> CreateOrderAsync([FromBody] Order order)
+    public async Task<IActionResult> CreateOrderAsync([FromBody] CreateOrderDto createOrderDto)
     {
-        var createdOrder = await _deliveryService.CreateOrderAsync(order);
-        return Ok(createdOrder);
+        var order = await _deliveryService.CreateOrderAsync(createOrderDto);
+        return Created($"api/orders/number/{order.OrderNumber}", order);
     }
 
+    
+    [HttpGet("number/{orderNumber}")]
+    public async Task<IActionResult> GetByOrderNumberAsync([FromRoute] string orderNumber)
+    {
+        
+        var all = await _deliveryService.GetAllOrdersAsync();
+        var found = all.Find(o => o.OrderNumber == orderNumber);
+        if (found == null) return NotFound();
+        return Ok(found);
+    }
+
+    
     [HttpGet]
-    public async Task<ActionResult<List<Order>>> GetAllOrdersAsync()
+    public async Task<IActionResult> GetAllOrdersAsync()
     {
         var orders = await _deliveryService.GetAllOrdersAsync();
         return Ok(orders);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Order>> GetOrderByIdAsync(Guid id)
+    
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetOrderByIdAsync([FromRoute] Guid id)
     {
         var order = await _deliveryService.GetOrderByIdAsync(id);
-        if (order == null)
-            return NotFound();
         return Ok(order);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateOrderAsync(Guid id, [FromBody] Order order)
+    
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateOrderAsync([FromRoute] Guid id, [FromBody] UpdateOrderDto updateOrderDto)
     {
-        var updatedOrder = await _deliveryService.UpdateOrderAsync(id, order);
-        return Ok(updatedOrder);
+        var order = await _deliveryService.UpdateOrderAsync(id, updateOrderDto);
+        return Ok(order);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteOrderAsync(Guid id)
+    
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteOrderAsync([FromRoute] Guid id)
     {
-        var deletedOrder = await _deliveryService.DeleteOrderAsync(id);
-        return Ok(deletedOrder);
+        var order = await _deliveryService.DeleteOrderAsync(id);
+        return Ok(order);
     }
 }

@@ -1,14 +1,16 @@
-using DeliverySystem.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DeliverySystem.DTOs;
+using DeliverySystem.Models;
 
 namespace DeliverySystem.Abstractions;
 
 public interface IDeliveryService
 {
-    Task<Order> CreateOrderAsync(Order order);
-    Task<List<Order>> GetAllOrdersAsync();
-    Task<Order> GetOrderByIdAsync(Guid id);
-    Task<Order> UpdateOrderAsync(Guid id, Order order);
-    Task<Order> DeleteOrderAsync(Guid id);
+    Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto createOrderDto);
+    Task<List<OrderResponseDto>> GetAllOrdersAsync();
+    Task<OrderResponseDto> GetOrderByIdAsync(Guid id);
+    Task<OrderResponseDto> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto);
+    Task<OrderResponseDto> DeleteOrderAsync(Guid id);
 }
