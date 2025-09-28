@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Теперь строка подключения берётся из appsettings.json
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 
@@ -20,9 +20,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<CourierService>();
+builder.Services.AddScoped<ICourierService, CourierService>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+
 
 var app = builder.Build();
 
