@@ -1,6 +1,11 @@
     using DeliverySystem.Abstractions;
 using DeliverySystem.Data;
+using DeliverySystem.DTOs;
+using DeliverySystem.JwtGenerator;
 using DeliverySystem.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliverySystem.Services;
@@ -11,6 +16,19 @@ public class CourierService : ICourierService
     public CourierService(ApplicationDbContext context)
     {
         _context = context;
+    }
+
+    public async Task<IActionResult> LoginAsync([FromBody] CourierLoginDto courierLoginDto)
+    {
+        var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.Email == courierLoginDto.Email);
+        if (courier == null || courier.Password != courierLoginDto.Password)
+        {
+            throw new Exception("Invalid email or password");
+        }
+        
+        var token = GenerateJwtToken.GenerateToken("courierId", courier.Id.ToString());
+        
+        return new OkObjectResult(new { token });
     }
 
     public async Task<Courier> AddCourierAsync(Courier courier)

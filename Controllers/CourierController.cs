@@ -1,6 +1,7 @@
 using DeliverySystem.DTOs;
 using DeliverySystem.Models;
 using DeliverySystem.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeliverySystem.Controllers;
@@ -14,10 +15,20 @@ public class CourierController : ControllerBase
     {
         _courierService = courierService;
     }
+        
+    [Authorize]
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginAsync([FromBody] CourierLoginDto courierLoginDto)
+    {
+        var result = await _courierService.LoginAsync(courierLoginDto);
+        return result;
+    }
 
     [HttpPost]
     public async Task<IActionResult> AddCourierAsync([FromBody] CourierDto courierDto)
     {
+        var courierId = User.FindFirst("courierId")?.Value;
+        
         var courier = new Courier
         {
             Name = courierDto.Name,
