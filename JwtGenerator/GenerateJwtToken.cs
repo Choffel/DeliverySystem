@@ -7,10 +7,10 @@ namespace DeliverySystem.JwtGenerator;
 
 public class GenerateJwtToken
 {
-    public static string GenerateToken(string customerId, string courierId)
+    public  string GenerateToken(string customerId, string courierId)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes("yourSecretKey");
+        var key = Encoding.ASCII.GetBytes("my_really_long_and_strong_secret_key_2025!");
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[] { new Claim("customerId", customerId), new Claim("courierId", courierId) }),
