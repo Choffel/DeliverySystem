@@ -1,7 +1,11 @@
 using DeliverySystem.DTOs;
 using DeliverySystem.Models;
 using DeliverySystem.Abstractions;
+using DeliverySystem.Data;
+using DeliverySystem.JwtGenerator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DeliverySystem.Controllers;
 
@@ -10,21 +14,39 @@ namespace DeliverySystem.Controllers;
 public class CourierController : ControllerBase
 {
     private readonly ICourierService _courierService;
-    public CourierController(ICourierService courierService)
+    private readonly ApplicationDbContext _context;
+    public CourierController(ICourierService courierService, ApplicationDbContext context)
     {
+        _context = context;
         _courierService = courierService;
+    }  
+        
+    [AllowAnonymous]
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginAsync([FromBody] CourierLoginDto courierLoginDto)
+    {
+        var courier = await _courierService.LoginAsync(courierLoginDto);
+        if (courier == null)
+        {
+            return Unauthorized();
+        }
+        var generatedToken = new GenerateJwtToken();
+        var token = generatedToken.GenerateToken("", courier.Id.ToString());
+        return Ok(new { token });
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCourierAsync([FromBody] CourierDto courierDto)
+    public async Task<IActionResult> AddCourierAsync([FromBody] CourierRegistration dto)
     {
-        var courier = new Courier
+        var Courier = new Courier
         {
-            Name = courierDto.Name,
-            Phone = courierDto.Phone
+            Name = dto.FullName,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Password = dto.Password
         };
-        var createdCourier = await _courierService.AddCourierAsync(courier);
-        return Ok(createdCourier);
+        var created = await _courierService.AddCourierAsync(Courier);
+        return Ok(created);
     }
 
     [HttpGet]
