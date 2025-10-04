@@ -25,7 +25,7 @@ public class DeliveryService : IDeliveryService
         var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == createOrderDto.CustomerEmail);
         if (customer == null)
         {
-            throw new InvalidOperationException("Пользователь с таким email не найден. Сначала создайте Customer.");
+            throw new InvalidOperationException("not found");
         }
         
         var order = new Order

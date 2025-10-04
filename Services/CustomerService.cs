@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DeliverySystem.DTOs;
+using DeliverySystem.JwtGenerator;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DeliverySystem.Services;
 
@@ -16,9 +20,31 @@ public class CustomerService : ICustomerService
     {
         _context = context;
     }
-
-    public async Task<Customer> AddCustomerAsync(Customer customer)
+    
+    
+    public async Task<Customer> CustomerLoginAsync([FromBody] LoginCustomerDto dto)
     {
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == dto.Email);
+        if (customer == null || customer.Password != dto.Password)
+        {
+            throw new Exception("Invalid email or password");
+        }
+
+        return customer;
+    }
+
+    public async Task<Customer> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
+    {
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            Name = dto.Name,
+            Phone = dto.Phone,
+            Email = dto.Email,
+            Address = dto.Address,
+            Password = dto.Password
+        };
+        
         _context.Add(customer);
         await _context.SaveChangesAsync();
         return customer;
