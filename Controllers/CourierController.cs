@@ -33,9 +33,7 @@ public class CourierController : ControllerBase
         var token = generatedToken.GenerateToken("", courier.Id.ToString());
         return Ok(new { token });
     }
-
     
-    //cange
     [HttpPost]
     public async Task<IActionResult> AddCourierAsync([FromBody] CourierRegistration dto)
     {
