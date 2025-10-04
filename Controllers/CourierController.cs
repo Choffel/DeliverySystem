@@ -14,10 +14,9 @@ namespace DeliverySystem.Controllers;
 public class CourierController : ControllerBase
 {
     private readonly ICourierService _courierService;
-    private readonly ApplicationDbContext _context;
-    public CourierController(ICourierService courierService, ApplicationDbContext context)
+   
+    public CourierController(ICourierService courierService)
     {
-        _context = context;
         _courierService = courierService;
     }  
         
@@ -35,6 +34,8 @@ public class CourierController : ControllerBase
         return Ok(new { token });
     }
 
+    
+    //cange
     [HttpPost]
     public async Task<IActionResult> AddCourierAsync([FromBody] CourierRegistration dto)
     {

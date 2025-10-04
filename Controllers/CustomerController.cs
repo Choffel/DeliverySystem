@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DeliverySystem.DTOs;
+using DeliverySystem.JwtGenerator;
 
 namespace DeliverySystem.Controllers;
 
@@ -16,11 +18,25 @@ public class CustomerController : ControllerBase
     {
         _customerService = customerService;
     }
+    
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginAsync([FromBody]  LoginCustomerDto dto)
+    {
+        var customer = await _customerService.CustomerLoginAsync(dto);
+        
+        if (customer == null)
+        {
+            return Unauthorized();
+        }
+        var generatedToken = new GenerateJwtToken();
+        var token = generatedToken.GenerateToken("", customer.Id.ToString());
+        return Ok(new { token });
+    }
 
     [HttpPost]
-    public async Task<IActionResult> AddCustomerAsync([FromBody] Customer customer)
+    public async Task<IActionResult> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
     {
-        var created = await _customerService.AddCustomerAsync(customer);
+        var created = await _customerService.AddCustomerAsync(dto);
         return Ok(created);
     }
 
