@@ -29,10 +29,18 @@ public class CourierService : ICourierService
         return courier;
     }
 
-    public async Task<Courier> AddCourierAsync(Courier courier)
+    public async Task<Courier> AddCourierAsync([FromBody] CourierRegistration dto)
     {
+        var courier = new Courier{
+            Id = Guid.NewGuid(),
+            Name = dto.FullName,
+            Phone = dto.Phone,
+            Email = dto.Email,
+            Password = dto.Password
+        };
         _context.Add(courier);
         await _context.SaveChangesAsync();
+        
         return courier;
     }
 

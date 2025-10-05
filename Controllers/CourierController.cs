@@ -37,14 +37,8 @@ public class CourierController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddCourierAsync([FromBody] CourierRegistration dto)
     {
-        var Courier = new Courier
-        {
-            Name = dto.FullName,
-            Email = dto.Email,
-            Phone = dto.Phone,
-            Password = dto.Password
-        };
-        var created = await _courierService.AddCourierAsync(Courier);
+        var created = await _courierService.AddCourierAsync(dto);
+        
         return Ok(created);
     }
 

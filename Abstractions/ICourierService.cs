@@ -9,7 +9,7 @@ namespace DeliverySystem.Abstractions;
 
 public interface ICourierService
 {
-    Task<Courier> AddCourierAsync(Courier courier);
+    Task<Courier> AddCourierAsync(CourierRegistration dto);
     Task<List<Courier>> GetAllCouriersAsync();
     Task<Courier> GetCourierByIdAsync(Guid id);
     Task<Courier> ChangeCourierAsync(Guid id, string name, string phone);
