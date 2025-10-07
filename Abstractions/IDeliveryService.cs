@@ -8,9 +8,12 @@ namespace DeliverySystem.Abstractions;
 
 public interface IDeliveryService
 {
-    Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto createOrderDto);
-    Task<List<OrderResponseDto>> GetAllOrdersAsync();
-    Task<OrderResponseDto> GetOrderByIdAsync(Guid id);
-    Task<OrderResponseDto> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto);
-    Task<OrderResponseDto> DeleteOrderAsync(Guid id);
+    Task<Order> CreateOrderAsync(CreateOrderDto createOrderDto);
+    
+    Task<Order> AssignOrderToCourierAsync(OrderAdmin orderAdmin);
+    Task<List<Order>> GetAllOrdersAsync();
+    Task<Order> GetOrderByIdAsync(Guid id);
+    Task<Order> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto);
+    Task<Order> DeleteOrderAsync(Guid id);
+    Task<List<CourierOrderDto>> GetOrdersForCourierAsync(Guid courierId);
 }

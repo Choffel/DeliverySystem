@@ -37,7 +37,7 @@ public class CourierService : ICourierService
             Phone = dto.Phone,
             Email = dto.Email,
             Password = dto.Password
-        };
+        };  
         _context.Add(courier);
         await _context.SaveChangesAsync();
         

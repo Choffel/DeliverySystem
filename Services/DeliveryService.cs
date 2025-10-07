@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DeliverySystem.DTOs;
 using DeliverySystem.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DeliverySystem.Services;
 
@@ -19,101 +20,100 @@ public class DeliveryService : IDeliveryService
     {
         _context = context;
     }
-    
-    public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto createOrderDto)
+
+    public async Task<Order> CreateOrderAsync([FromBody] CreateOrderDto dto)
     {
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == createOrderDto.CustomerEmail);
-        if (customer == null)
-        {
-            throw new InvalidOperationException("not found");
-        }
-        
-        var order = new Order
+        var order = new Order()
         {
             Id = Guid.NewGuid(),
-            OrderNumber = GenerateOrderNumber(),
-            CustomerId = customer.Id,
-            DeliveryAddress = string.IsNullOrWhiteSpace(createOrderDto.DeliveryAddress) ? customer.Address : createOrderDto.DeliveryAddress,
-            Product = createOrderDto.Product,
-            CreatedAt = DateTime.UtcNow,
+            DeliveryAddress = dto.DeliveryAddress,
+            Product = dto.Product,
+            OrderNumber = Guid.NewGuid().ToString(),
             Status = DeliveryStatus.Pending,
         };
         
-        _context.Orders.Add(order);
+        _context.Add(order);
         await _context.SaveChangesAsync();
         
-        return MapToResponse(order, null);
+        return order;
     }
 
-    public async Task<List<OrderResponseDto>> GetAllOrdersAsync()
+
+    // проверить
+    // доделать сервис 
+    //доработать статусы 
+    public async Task<Order>AssignOrderToCourierAsync(OrderAdmin orderAdmin)
     {
-        var orders = await _context.Orders.Include(o => o.Courier).ToListAsync();
-        return orders.Select(o => MapToResponse(o, o.Courier)).ToList();
+       var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderAdmin.OrderId);
+
+       if (order is null)
+       {
+           throw new Exception("Order not found");
+       }
+       
+       order.CourierId = orderAdmin.CourierId;
+       order.Status = orderAdmin.DeliveryStatus;
+       
+       await _context.SaveChangesAsync();
+       
+       return order;
     }
     
-    public async Task<OrderResponseDto> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto)
+    
+    public async Task<List<CourierOrderDto>> GetOrdersForCourierAsync(Guid courierId)
     {
-        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null) throw new KeyNotFoundException("Заказ не найден");
+            return await _context.Orders
+                .Where(o => o.CourierId == courierId)
+                .Select(o => new CourierOrderDto
+                {
+                    OrderNumber = o.OrderNumber,
+                    DeliveryAddress = o.DeliveryAddress,
+                    Status = o.Status
+                })
+                .ToListAsync();
+    }
+    
+    public async Task<List<Order>> GetAllOrdersAsync()
+    {
+        var orders = await _context.Orders.ToListAsync();
+        return orders;
+    }
 
-        
-        order.Status = updateOrderDto.Status;
-        if (!string.IsNullOrWhiteSpace(updateOrderDto.DeliveryAddress))
-            order.DeliveryAddress = updateOrderDto.DeliveryAddress;
-        
-        if (updateOrderDto.CourierId.HasValue)
+    public async Task<Order> GetOrderByIdAsync(Guid orderId)
+    {
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+        return order;
+    }
+    
+    public async Task<Order> UpdateOrderAsync(Guid orderId, UpdateOrderDto dto)
+    {
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order == null)
         {
-            
-            var courierExists = await _context.Couriers.AnyAsync(c => c.Id == updateOrderDto.CourierId.Value);
-            if (!courierExists)
-                throw new InvalidOperationException("Указанный курьер не найден");
-            order.CourierId = updateOrderDto.CourierId.Value;
+            throw new Exception("Order not found");
         }
         
-        order.UpdatedAt = DateTime.UtcNow;
+        order.DeliveryAddress = dto.DeliveryAddress;
+        order.Product = dto.Product;
+        order.Status = dto.Status;
+        
         await _context.SaveChangesAsync();
         
-        
-        Courier courier = null;
-        if (order.CourierId.HasValue)
-            courier = await _context.Couriers.FirstOrDefaultAsync(c => c.Id == order.CourierId.Value);
-        
-        return MapToResponse(order, courier);
+        return order;
     }
     
-    public async Task<OrderResponseDto> DeleteOrderAsync(Guid id)
+    public async Task<Order> DeleteOrderAsync(Guid orderId)
     {
-        var order = await _context.Orders.Include(o => o.Courier).FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null) throw new KeyNotFoundException("Order not found");
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order == null)
+        {
+            throw new Exception("Order not found");
+        }
+        
         _context.Orders.Remove(order);
         await _context.SaveChangesAsync();
-        return MapToResponse(order, order.Courier);
-    }
-    
-    public async Task<OrderResponseDto> GetOrderByIdAsync(Guid id)
-    {
-        var order = await _context.Orders.Include(o => o.Courier).FirstOrDefaultAsync(o => o.Id == id);
-        if (order == null) throw new KeyNotFoundException("Order not found");
-        return MapToResponse(order, order.Courier);
-    }
-
-    private static OrderResponseDto MapToResponse(Order o, Courier courier)
-    {
-        return new OrderResponseDto
-        {
-            OrderNumber = o.OrderNumber,
-            Product = o.Product,
-            CreatedAt = o.CreatedAt,
-            Status = o.Status,
-            DeliveryAddress = o.DeliveryAddress,
-            CourierName = courier?.Name,
-            CourierPhone = courier?.Phone,
-            EstimatedDeliveryTime = null
-        };
-    }
-
-    private static string GenerateOrderNumber()
-    {
-        return $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N").Substring(0,6).ToUpper()}";
+        
+        return order;
     }
 }
