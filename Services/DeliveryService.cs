@@ -37,11 +37,7 @@ public class DeliveryService : IDeliveryService
         
         return order;
     }
-
-
-    // проверить
-    // доделать сервис 
-    //доработать статусы 
+    
     public async Task<Order>AssignOrderToCourierAsync(OrderAdmin orderAdmin)
     {
        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderAdmin.OrderId);
@@ -52,13 +48,12 @@ public class DeliveryService : IDeliveryService
        }
        
        order.CourierId = orderAdmin.CourierId;
-       order.Status = orderAdmin.DeliveryStatus;
+       order.Status = DeliveryStatus.InTransit;
        
        await _context.SaveChangesAsync();
        
        return order;
     }
-    
     
     public async Task<List<CourierOrderDto>> GetOrdersForCourierAsync(Guid courierId)
     {
