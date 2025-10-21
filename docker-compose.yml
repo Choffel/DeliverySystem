@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16
+    container_name: delivery-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: DeliveryDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - delivery-network
+
+  # Delivery API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: delivery-api
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=DeliveryDb;Username=postgres;Password=123
+    ports:
+      - "8080:8080"
+    networks:
+      - delivery-network
+
+networks:
+  delivery-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

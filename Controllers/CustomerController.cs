@@ -1,11 +1,8 @@
 using DeliverySystem.Abstractions;
-using DeliverySystem.Models;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using DeliverySystem.DTOs;
 using DeliverySystem.JwtGenerator;
+using Microsoft.AspNetCore.Identity;
 
 namespace DeliverySystem.Controllers;
 
@@ -14,13 +11,18 @@ namespace DeliverySystem.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly ICustomerService _customerService;
-    public CustomerController(ICustomerService customerService)
+    private readonly UserManager<IdentityUser> _userManager;
+    
+    public CustomerController(
+        ICustomerService customerService, 
+        UserManager<IdentityUser> userManager)
     {
         _customerService = customerService;
+        _userManager = userManager;
     }
     
     [HttpPost("login")]
-    public async Task<IActionResult> LoginAsync([FromBody]  LoginCustomerDto dto)
+    public async Task<IActionResult> LoginAsync([FromBody] LoginCustomerDto dto)
     {
         var customer = await _customerService.CustomerLoginAsync(dto);
         
@@ -28,45 +30,64 @@ public class CustomerController : ControllerBase
         {
             return Unauthorized();
         }
+        
+        // Find the user ID from the email
+        var user = await _userManager.FindByEmailAsync(customer.Email);
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+        
         var generatedToken = new GenerateJwtToken();
-        var token = generatedToken.GenerateToken("", customer.Id.ToString());
+        var token = generatedToken.GenerateToken("", user.Id);
         return Ok(new { token });
     }
 
-    [HttpPost]
+    [HttpPost("register")]
     public async Task<IActionResult> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
     {
-        var created = await _customerService.AddCustomerAsync(dto);
-        return Ok(created);
+        var result = await _customerService.AddCustomerAsync(dto);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+        return Ok(result);
     }
 
-    [HttpGet]
+    [HttpGet("get-all")]
     public async Task<IActionResult> GetAllCustomersAsync()
     {
         var customers = await _customerService.GetAllCustomersAsync();
         return Ok(customers);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetCustomerByIdAsync([FromRoute] Guid id)
+    [HttpGet("{email}")]
+    public async Task<IActionResult> GetCustomerByIdAsync([FromRoute] string email)
     {
-        var customer = await _customerService.GetCustomerByIdAsync(id);
-        if (customer == null) return NotFound();
+        var customer = await _customerService.GetCustomerByEmailAsync(email);
+        
         return Ok(customer);
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> UpdateCustomerAsync([FromRoute] Guid id, [FromBody] Customer customer)
+    [HttpPut("update {email}")]
+    public async Task<IActionResult> UpdateCustomerAsync([FromRoute] string email, [FromBody] RegistrationCustomerDto customer)
     {
-        var updated = await _customerService.UpdateCustomerAsync(id, customer);
-        return Ok(updated);
+        var result = await _customerService.UpdateCustomerAsync(email, customer);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+        return Ok(result);
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteCustomerAsync([FromRoute] Guid id)
+    [HttpDelete("delete {email}")]
+    public async Task<IActionResult> DeleteCustomerAsync([FromRoute] string email)
     {
-        var deleted = await _customerService.DeleteCustomerAsync(id);
-        return Ok(deleted);
+        var result = await _customerService.DeleteCustomerAsync(email);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+        return Ok(result);
     }
 }
-

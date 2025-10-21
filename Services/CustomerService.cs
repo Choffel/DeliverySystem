@@ -1,13 +1,12 @@
 using DeliverySystem.Abstractions;
 using DeliverySystem.Data;
-using DeliverySystem.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DeliverySystem.DTOs;
-using DeliverySystem.JwtGenerator;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeliverySystem.Services;
@@ -15,69 +14,155 @@ namespace DeliverySystem.Services;
 public class CustomerService : ICustomerService
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserManager<IdentityUser> _userManager;
+    private readonly SignInManager<IdentityUser> _signInManager;
 
-    public CustomerService(ApplicationDbContext context)
+    public CustomerService(
+        ApplicationDbContext context,
+        UserManager<IdentityUser> userManager,
+        SignInManager<IdentityUser> signInManager)
     {
         _context = context;
+        _userManager = userManager;
+        _signInManager = signInManager;
     }
     
-    
-    public async Task<Customer> CustomerLoginAsync([FromBody] LoginCustomerDto dto)
+    public async Task<RegistrationCustomerDto> CustomerLoginAsync([FromBody] LoginCustomerDto dto)
     {
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Email == dto.Email);
-        if (customer == null || customer.Password != dto.Password)
+        var user = await _userManager.FindByEmailAsync(dto.Email);
+        if (user == null)
         {
             throw new Exception("Invalid email or password");
         }
 
-        return customer;
+        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+        if (!result.Succeeded)
+        {
+            throw new Exception("Invalid email or password");
+        }
+
+        // Return user data as DTO
+        var claims = await _userManager.GetClaimsAsync(user);
+        var name = claims.FirstOrDefault(c => c.Type == "Name")?.Value ?? "";
+        var phone = claims.FirstOrDefault(c => c.Type == "Phone")?.Value ?? "";
+        var address = claims.FirstOrDefault(c => c.Type == "Address")?.Value ?? "";
+
+        return new RegistrationCustomerDto
+        {
+            Email = user.Email,
+            Name = name,
+            Phone = phone,
+            Address = address
+        };
     }
 
-    public async Task<Customer> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
+    public async Task<IdentityResult> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
     {
-        var customer = new Customer
+        var user = new IdentityUser
         {
-            Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Phone = dto.Phone,
+            UserName = dto.Email,
             Email = dto.Email,
-            Address = dto.Address,
-            Password = dto.Password
+            PhoneNumber = dto.Phone
         };
         
-        _context.Add(customer);
-        await _context.SaveChangesAsync();
-        return customer;
+        var result = await _userManager.CreateAsync(user, dto.Password);
+        if (result.Succeeded)
+        {
+            // Store additional user information as claims
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Name", dto.Name));
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Phone", dto.Phone));
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Address", dto.Address));
+        }
+        
+        return result;
     }
 
-    public async Task<List<Customer>> GetAllCustomersAsync()
+    public async Task<List<RegistrationCustomerDto>> GetAllCustomersAsync()
     {
-        return await _context.Customers.ToListAsync();
+        var users = await _userManager.Users.ToListAsync();
+        var result = new List<RegistrationCustomerDto>();
+        
+        foreach (var user in users)
+        {
+            var claims = await _userManager.GetClaimsAsync(user);
+            var name = claims.FirstOrDefault(c => c.Type == "Name")?.Value ?? "";
+            var phone = user.PhoneNumber ?? "";
+            var address = claims.FirstOrDefault(c => c.Type == "Address")?.Value ?? "";
+            
+            result.Add(new RegistrationCustomerDto
+            {
+                Email = user.Email,
+                Name = name,
+                Phone = phone,
+                Address = address
+            });
+        }
+        
+        return result;
     }
 
-    public async Task<Customer> GetCustomerByIdAsync(Guid customerId)
+    public async Task<RegistrationCustomerDto> GetCustomerByEmailAsync(string email)
     {
-        return await _context.Set<Customer>().FirstOrDefaultAsync(c => c.Id == customerId);
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            return null;
+        }
+        
+        var claims = await _userManager.GetClaimsAsync(user);
+        var name = claims.FirstOrDefault(c => c.Type == "Name")?.Value ?? "";
+        var phone = user.PhoneNumber ?? "";
+        var address = claims.FirstOrDefault(c => c.Type == "Address")?.Value ?? "";
+        
+        return new RegistrationCustomerDto
+        {
+            Email = user.Email,
+            Name = name,
+            Phone = phone,
+            Address = address
+        };
     }
 
-    public async Task<Customer> UpdateCustomerAsync(Guid customerId, Customer customer)
+    public async Task<IdentityResult> UpdateCustomerAsync(string email, RegistrationCustomerDto customer)
     {
-        var existing = await _context.Set<Customer>().FirstOrDefaultAsync(c => c.Id == customerId);
-        if (existing == null) throw new Exception("Customer not found");
-        existing.Name = customer.Name;
-        existing.Phone = customer.Phone;
-        existing.Email = customer.Email;
-        existing.Address = customer.Address;
-        await _context.SaveChangesAsync();
-        return existing;
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null) throw new Exception("User not found");
+        
+        user.Email = customer.Email;
+        user.UserName = customer.Email;
+        user.PhoneNumber = customer.Phone;
+        
+        var result = await _userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            // Update claims
+            var claims = await _userManager.GetClaimsAsync(user);
+            
+            // Remove existing claims
+            var nameClaim = claims.FirstOrDefault(c => c.Type == "Name");
+            if (nameClaim != null)
+                await _userManager.RemoveClaimAsync(user, nameClaim);
+            
+            var addressClaim = claims.FirstOrDefault(c => c.Type == "Address");
+            if (addressClaim != null)
+                await _userManager.RemoveClaimAsync(user, addressClaim);
+            
+            // Add updated claims
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Name", customer.Name));
+            await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Address", customer.Address));
+        }
+        
+        return result;
     }
 
-    public async Task<Customer> DeleteCustomerAsync(Guid customerId)
+    public async Task<IdentityResult> DeleteCustomerAsync(string email)
     {
-        var customer = await _context.Set<Customer>().FirstOrDefaultAsync(c => c.Id == customerId);
-        if (customer == null) throw new Exception("Customer not found");
-        _context.Remove(customer);
-        await _context.SaveChangesAsync();
-        return customer;
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            throw new Exception("User not found");
+        }
+        
+        return await _userManager.DeleteAsync(user);
     }
 }

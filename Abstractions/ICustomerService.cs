@@ -1,18 +1,18 @@
-using DeliverySystem.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DeliverySystem.DTOs;
+using Microsoft.AspNetCore.Identity;
 
 namespace DeliverySystem.Abstractions;
 
 public interface ICustomerService
 {
-    Task<Customer> GetCustomerByIdAsync(Guid customerId);
-    Task<List<Customer>> GetAllCustomersAsync();
-    Task<Customer> AddCustomerAsync(RegistrationCustomerDto dto);
+    Task<RegistrationCustomerDto> GetCustomerByEmailAsync(string email);
+    Task<List<RegistrationCustomerDto>> GetAllCustomersAsync();
+    Task<IdentityResult> AddCustomerAsync(RegistrationCustomerDto dto);
     
-    Task<Customer> CustomerLoginAsync(LoginCustomerDto dto);
-    Task<Customer> UpdateCustomerAsync(Guid customerId, Customer customer);
-    Task<Customer> DeleteCustomerAsync(Guid customerId);
+    Task<RegistrationCustomerDto> CustomerLoginAsync(LoginCustomerDto dto);
+    Task<IdentityResult> UpdateCustomerAsync(string email, RegistrationCustomerDto customer);
+    Task<IdentityResult> DeleteCustomerAsync(string email);
 }
