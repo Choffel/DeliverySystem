@@ -17,4 +17,5 @@ public interface ICourierService
     Task<Courier> LoginAsync(CourierLoginDto courierLoginDto);
     Task<Courier> ResetPasswordAsync(Guid id, string newPassword);
     Task<Courier> ResetPasswordAsync(CourierResetPasswordDto dto);
+    
 }

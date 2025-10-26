@@ -1,10 +1,8 @@
 using DeliverySystem.Abstractions;
 using DeliverySystem.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
 using DeliverySystem.Models;
-using System.Collections.Generic;
+
 
 namespace DeliverySystem.Controllers;
 
@@ -19,7 +17,7 @@ public class DeliveryController : ControllerBase
         _deliveryService = deliveryService;
     }
 
-    // Создание заказа (только нужные поля от клиента)
+    
     [HttpPost]
     public async Task<IActionResult> CreateOrderAsync([FromBody] CreateOrderDto createOrderDto)
     {
@@ -27,7 +25,7 @@ public class DeliveryController : ControllerBase
         return Created($"api/orders/number/{order.OrderNumber}", order);
     }
 
-    // Назначение заказа курьеру (для администратора)
+    
     [HttpPost("assign")]
     public async Task<IActionResult> AssignOrderToCourierAsync([FromBody] OrderAdmin orderAdmin)
     {
@@ -35,7 +33,7 @@ public class DeliveryController : ControllerBase
         return Ok(order);
     }
 
-    // Получить все заказы
+    
     [HttpGet]
     public async Task<IActionResult> GetAllOrdersAsync()
     {
@@ -43,7 +41,7 @@ public class DeliveryController : ControllerBase
         return Ok(orders);
     }
 
-    // Получить все заказы для курьера
+    
     [HttpGet("courier/{courierId:guid}")]
     public async Task<IActionResult> GetOrdersForCourierAsync([FromRoute] Guid courierId)
     {
@@ -51,7 +49,7 @@ public class DeliveryController : ControllerBase
         return Ok(orders);
     }
 
-    // Получить заказ по Id
+    
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetOrderByIdAsync([FromRoute] Guid id)
     {
@@ -59,7 +57,7 @@ public class DeliveryController : ControllerBase
         return Ok(order);
     }
 
-    // Обновить заказ
+    
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateOrderAsync([FromRoute] Guid id, [FromBody] UpdateOrderDto updateOrderDto)
     {
@@ -67,11 +65,25 @@ public class DeliveryController : ControllerBase
         return Ok(order);
     }
 
-    // Удалить заказ
+   
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteOrderAsync([FromRoute] Guid id)
     {
         var order = await _deliveryService.DeleteOrderAsync(id);
         return Ok(order);
+    }
+
+    [HttpPost("confirm/{id:guid}")]
+    public async Task<IActionResult> DeliveryConfirmationAsync([FromRoute] Guid id)
+    {
+        var result = await _deliveryService.DeliveryConfirmationAsync(id);
+        return Ok(result);
+    }
+
+    [HttpPost("cancel/{id:guid}")]
+    public async Task<IActionResult> CancelOrderAsync([FromRoute] Guid id)
+    {
+        var result = await _deliveryService.CancelOrderAsync(id);
+        return Ok(result);
     }
 }

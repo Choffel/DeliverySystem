@@ -17,9 +17,9 @@ public class AdminController : ControllerBase
         _userManager = userManager;
         _roleManager = roleManager;
     }
-
-    [Authorize(Roles = "Admin")]
+    
     [HttpPost("create")]
+    [AllowAnonymous]
     public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
     {
         if (!await _roleManager.RoleExistsAsync(dto.Role))

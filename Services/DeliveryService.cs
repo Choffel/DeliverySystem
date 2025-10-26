@@ -2,10 +2,6 @@ using DeliverySystem.Abstractions;
 using DeliverySystem.Data;
 using DeliverySystem.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using DeliverySystem.DTOs;
 using DeliverySystem.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -84,7 +80,7 @@ public class DeliveryService : IDeliveryService
     public async Task<Order> UpdateOrderAsync(Guid orderId, UpdateOrderDto dto)
     {
         var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-        if (order == null)
+        if (order is null)
         {
             throw new Exception("Order not found");
         }
@@ -101,12 +97,40 @@ public class DeliveryService : IDeliveryService
     public async Task<Order> DeleteOrderAsync(Guid orderId)
     {
         var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-        if (order == null)
+        if (order is null)
         {
             throw new Exception("Order not found");
         }
         
         _context.Orders.Remove(order);
+        await _context.SaveChangesAsync();
+        
+        return order;
+    }
+    
+    public async Task<Order> DeliveryConfirmationAsync(Guid orderId)
+    {
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order is null)
+        {
+            throw new Exception("Order not found");
+        }
+        
+        order.Status = DeliveryStatus.Delivered;
+        await _context.SaveChangesAsync();
+        
+        return order;
+    }
+    
+    public async Task<Order> CancelOrderAsync(Guid orderId)
+    {
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order is null)
+        {
+            throw new Exception("Order not found");
+        }
+        
+        order.Status = DeliveryStatus.Cancelled;
         await _context.SaveChangesAsync();
         
         return order;

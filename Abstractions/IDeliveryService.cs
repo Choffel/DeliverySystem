@@ -16,4 +16,8 @@ public interface IDeliveryService
     Task<Order> UpdateOrderAsync(Guid id, UpdateOrderDto updateOrderDto);
     Task<Order> DeleteOrderAsync(Guid id);
     Task<List<CourierOrderDto>> GetOrdersForCourierAsync(Guid courierId);
+    
+    Task<Order>DeliveryConfirmationAsync(Guid id);
+    
+    Task<Order> CancelOrderAsync(Guid id);
 }
