@@ -1,11 +1,11 @@
 using DeliverySystem.DTOs;
-using DeliverySystem.Models;
+using Microsoft.AspNetCore.Identity;
+
 using DeliverySystem.Abstractions;
-using DeliverySystem.Data;
 using DeliverySystem.JwtGenerator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using DeliverySystem.DTOs.CourierDTOs;
 
 namespace DeliverySystem.Controllers;
 
@@ -14,10 +14,12 @@ namespace DeliverySystem.Controllers;
 public class CourierController : ControllerBase
 {
     private readonly ICourierService _courierService;
+    private readonly UserManager<IdentityUser> _userManager;
    
-    public CourierController(ICourierService courierService)
+    public CourierController(ICourierService courierService, UserManager<IdentityUser> userManager)
     {
         _courierService = courierService;
+        _userManager = userManager;
     }  
         
     [AllowAnonymous]
@@ -29,11 +31,16 @@ public class CourierController : ControllerBase
         {
             return Unauthorized();
         }
+
+        var user = await _userManager.FindByEmailAsync(courier.Email);
+        var roles = user is null ? new List<string>() : (await _userManager.GetRolesAsync(user));
+
         var generatedToken = new GenerateJwtToken();
-        var token = generatedToken.GenerateToken("", courier.Id.ToString());
+        var token = generatedToken.GenerateToken("", courier.Id.ToString(), roles);
         return Ok(new { token });
     }
-    
+
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> AddCourierAsync([FromBody] CourierRegistration dto)
     {
@@ -42,6 +49,7 @@ public class CourierController : ControllerBase
         return Ok(created);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<IActionResult> GetAllCouriersAsync()
     {
@@ -49,6 +57,7 @@ public class CourierController : ControllerBase
         return Ok(couriers);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetCourierByIdAsync([FromRoute] Guid id)
     {
@@ -56,6 +65,7 @@ public class CourierController : ControllerBase
         return Ok(courier);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> ChangeCourierAsync([FromRoute] Guid id, [FromBody] CourierDto courierDto)
     {
@@ -63,10 +73,19 @@ public class CourierController : ControllerBase
         return Ok(courier);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteCourierAsync([FromRoute] Guid id)
     {
         var courier = await _courierService.DeleteCourierAsync(id);
+        return Ok(courier);
+    }
+
+    [Authorize(Roles = "Admin,Courier")]
+    [HttpPut("{id:guid}/reset-password")]
+    public async Task<IActionResult> ResetPasswordAsync([FromRoute] Guid id, [FromBody] CourierResetPasswordDto dto)
+    {
+        var courier = await _courierService.ResetPasswordAsync(id, dto.NewPassword);
         return Ok(courier);
     }
 }

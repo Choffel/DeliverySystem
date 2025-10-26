@@ -13,16 +13,13 @@ namespace DeliverySystem.Services;
 
 public class CustomerService : ICustomerService
 {
-    private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
 
     public CustomerService(
-        ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         SignInManager<IdentityUser> signInManager)
     {
-        _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
     }
@@ -41,7 +38,7 @@ public class CustomerService : ICustomerService
             throw new Exception("Invalid email or password");
         }
 
-        // Return user data as DTO
+        
         var claims = await _userManager.GetClaimsAsync(user);
         var name = claims.FirstOrDefault(c => c.Type == "Name")?.Value ?? "";
         var phone = claims.FirstOrDefault(c => c.Type == "Phone")?.Value ?? "";
@@ -56,7 +53,7 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<IdentityResult> AddCustomerAsync([FromBody] RegistrationCustomerDto dto)
+    public async Task<IdentityResult> AddCustomerAsync(RegistrationCustomerDto dto)
     {
         var user = new IdentityUser
         {
@@ -68,10 +65,16 @@ public class CustomerService : ICustomerService
         var result = await _userManager.CreateAsync(user, dto.Password);
         if (result.Succeeded)
         {
-            // Store additional user information as claims
+            // Ensure Customer role exists
+            var roleExists = await _userManager.IsInRoleAsync(user, "Customer");
+
+            // Use RoleManager via service locator: get from _userManager's context - can't access RoleManager here, so rely on Role creation in Program.cs startup
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Name", dto.Name));
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Phone", dto.Phone));
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Address", dto.Address));
+
+            // Assign role Customer
+            await _userManager.AddToRoleAsync(user, "Customer");
         }
         
         return result;
@@ -135,10 +138,10 @@ public class CustomerService : ICustomerService
         var result = await _userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
-            // Update claims
+            
             var claims = await _userManager.GetClaimsAsync(user);
             
-            // Remove existing claims
+            
             var nameClaim = claims.FirstOrDefault(c => c.Type == "Name");
             if (nameClaim != null)
                 await _userManager.RemoveClaimAsync(user, nameClaim);
@@ -147,9 +150,11 @@ public class CustomerService : ICustomerService
             if (addressClaim != null)
                 await _userManager.RemoveClaimAsync(user, addressClaim);
             
-            // Add updated claims
+            
+            
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Name", customer.Name));
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Address", customer.Address));
+            
         }
         
         return result;
@@ -164,5 +169,19 @@ public class CustomerService : ICustomerService
         }
         
         return await _userManager.DeleteAsync(user);
+    }
+
+    public async Task<IdentityResult> ResetPasswordAsync(string email, string newPassword)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            throw new Exception("User not found");
+        }
+        
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+        return result;
     }
 }

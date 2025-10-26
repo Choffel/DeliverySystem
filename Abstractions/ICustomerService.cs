@@ -15,4 +15,6 @@ public interface ICustomerService
     Task<RegistrationCustomerDto> CustomerLoginAsync(LoginCustomerDto dto);
     Task<IdentityResult> UpdateCustomerAsync(string email, RegistrationCustomerDto customer);
     Task<IdentityResult> DeleteCustomerAsync(string email);
+    
+    Task<IdentityResult> ResetPasswordAsync(string email, string NewPassword);
 }
