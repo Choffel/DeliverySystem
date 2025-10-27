@@ -89,4 +89,12 @@ public class CustomerController : ControllerBase
             return BadRequest(result.Errors);
         return Ok(result);
     }
+    
+    [HttpGet("Orders/{email}")]
+    [Authorize(Roles = "Admin,user")]
+    public async Task<IActionResult> GetOrdersByCustomerEmailAsync([FromRoute] string email)
+    {
+        var orders = await _customerService.GetOrdersByCustomerEmailAsync(email);
+        return Ok(orders);
+    }
 }

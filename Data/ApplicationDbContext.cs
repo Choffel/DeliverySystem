@@ -15,5 +15,14 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Courier> Couriers { get; set; }
     public DbSet<Order> Orders { get; set; }
     
-    // Customer model is removed as we're using IdentityUser now
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        
+        builder.Entity<Order>()
+            .HasOne(o => o.User)
+            .WithMany(u => u.Orders)
+            .HasForeignKey(o => o.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }

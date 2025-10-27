@@ -6,6 +6,7 @@ namespace DeliverySystem.Models
     {
         public Guid Id { get; set; }
         
+        public string UserId { get; set; }
         public string OrderNumber { get; set; }
         
         public Guid? CourierId { get; set; }
@@ -19,6 +20,8 @@ namespace DeliverySystem.Models
         public DateTime UpdatedAt { get; set; }
         
         public DeliveryStatus Status { get; set; } 
+        
+        public Customer User { get; set; }
         
     }
 }

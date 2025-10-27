@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DeliverySystem.DTOs;
 using Microsoft.AspNetCore.Identity;
 using System.Linq;
+using DeliverySystem.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeliverySystem.Services;
@@ -15,11 +16,14 @@ public class CustomerService : ICustomerService
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly ApplicationDbContext _context;
 
     public CustomerService(
+        ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         SignInManager<IdentityUser> signInManager)
     {
+        _context = context;
         _userManager = userManager;
         _signInManager = signInManager;
     }
@@ -65,15 +69,13 @@ public class CustomerService : ICustomerService
         var result = await _userManager.CreateAsync(user, dto.Password);
         if (result.Succeeded)
         {
-            // Ensure Customer role exists
             var roleExists = await _userManager.IsInRoleAsync(user, "Customer");
 
-            // Use RoleManager via service locator: get from _userManager's context - can't access RoleManager here, so rely on Role creation in Program.cs startup
+            
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Name", dto.Name));
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Phone", dto.Phone));
             await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("Address", dto.Address));
 
-            // Assign role Customer
             await _userManager.AddToRoleAsync(user, "Customer");
         }
         
@@ -184,4 +186,20 @@ public class CustomerService : ICustomerService
 
         return result;
     }
+    
+    public async Task<List<Order>> GetOrdersByCustomerEmailAsync(string email)
+    {
+        var result = await _userManager.FindByEmailAsync(email);
+        if (result is null)
+        {
+            throw new Exception("User not found");
+        }
+        var orders = await _context.Orders
+            .Include(o => o.User)
+            .Where(o => o.User.Email == email)
+            .ToListAsync();
+
+        return orders;
+    }
+    
 }
