@@ -8,5 +8,4 @@ public class OrderAdmin
     
     public Guid CourierId { get; set; }
     
-    public DeliveryStatus DeliveryStatus { get; set; }
 }

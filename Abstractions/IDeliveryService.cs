@@ -8,7 +8,7 @@ namespace DeliverySystem.Abstractions;
 
 public interface IDeliveryService
 {
-    Task<Order> CreateOrderAsync(CreateOrderDto createOrderDto);
+    Task<Order> CreateOrderAsync(CreateOrderDto createOrderDto, string UserId);
     
     Task<Order> AssignOrderToCourierAsync(OrderAdmin orderAdmin);
     Task<List<Order>> GetAllOrdersAsync();

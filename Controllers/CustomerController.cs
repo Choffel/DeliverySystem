@@ -70,7 +70,7 @@ public class CustomerController : ControllerBase
         return Ok(customer);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Customer")]
     [HttpPut("update/{email}")]
     public async Task<IActionResult> UpdateCustomerAsync([FromRoute] string email, [FromBody] RegistrationCustomerDto customer)
     {

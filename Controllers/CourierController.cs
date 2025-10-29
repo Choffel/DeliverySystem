@@ -27,7 +27,7 @@ public class CourierController : ControllerBase
     public async Task<IActionResult> LoginAsync([FromBody] CourierLoginDto courierLoginDto)
     {
         var courier = await _courierService.LoginAsync(courierLoginDto);
-        if (courier == null)
+        if (courier is null)
         {
             return Unauthorized();
         }
@@ -83,9 +83,9 @@ public class CourierController : ControllerBase
 
     [Authorize(Roles = "Admin,Courier")]
     [HttpPut("{id:guid}/reset-password")]
-    public async Task<IActionResult> ResetPasswordAsync([FromRoute] Guid id, [FromBody] CourierResetPasswordDto dto)
+    public async Task<IActionResult> ResetPasswordAsync([FromBody] CourierResetPasswordDto dto)
     {
-        var courier = await _courierService.ResetPasswordAsync(id, dto.NewPassword);
+        var courier = await _courierService.ResetPasswordAsync(dto);
         return Ok(courier);
     }
 }

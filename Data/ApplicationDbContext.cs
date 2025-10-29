@@ -12,6 +12,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
         
     }
+    public DbSet<Customer> Customers { get; set; }
     public DbSet<Courier> Couriers { get; set; }
     public DbSet<Order> Orders { get; set; }
     

@@ -99,20 +99,6 @@ public class CourierService : ICourierService
         await _context.SaveChangesAsync();
         return courier;
     }
-
-    public async Task<Courier> ResetPasswordAsync(Guid id, string newPassword)
-    {
-        var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.Id == id);
-        if (courier == null)
-        {
-            throw new Exception("Courier not found");
-        }
-
-        courier.Password = newPassword;
-        await _context.SaveChangesAsync();
-        return courier;
-    }
-
     
     public async Task<Courier> ResetPasswordAsync(CourierResetPasswordDto dto)
     {

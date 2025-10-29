@@ -17,8 +17,10 @@ public class DeliveryService : IDeliveryService
         _context = context;
     }
 
-    public async Task<Order> CreateOrderAsync([FromBody] CreateOrderDto dto)
+    public async Task<Order> CreateOrderAsync([FromBody] CreateOrderDto dto, string UserId)
     {
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == UserId);
+        
         var order = new Order()
         {
             Id = Guid.NewGuid(),
@@ -26,9 +28,13 @@ public class DeliveryService : IDeliveryService
             Product = dto.Product,
             OrderNumber = Guid.NewGuid().ToString(),
             Status = DeliveryStatus.Pending,
+            User = customer,
+            UserId = customer.Id,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
         
-        _context.Add(order);
+        _context.Orders.Add(order);
         await _context.SaveChangesAsync();
         
         return order;

@@ -19,10 +19,10 @@ public class DeliveryController : ControllerBase
 
     
     [HttpPost]
-    public async Task<IActionResult> CreateOrderAsync([FromBody] CreateOrderDto createOrderDto)
+    public async Task<IActionResult> CreateOrderAsync([FromBody] CreateOrderDto createOrderDto, string UserId)
     {
-        var order = await _deliveryService.CreateOrderAsync(createOrderDto);
-        return Created($"api/orders/number/{order.OrderNumber}", order);
+        var order = await _deliveryService.CreateOrderAsync(createOrderDto, UserId);
+        return Created("Created", order);
     }
 
     
