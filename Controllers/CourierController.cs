@@ -27,17 +27,7 @@ public class CourierController : ControllerBase
     public async Task<IActionResult> LoginAsync([FromBody] CourierLoginDto courierLoginDto)
     {
         var courier = await _courierService.LoginAsync(courierLoginDto);
-        if (courier == null)
-        {
-            return Unauthorized();
-        }
-
-        var user = await _userManager.FindByEmailAsync(courier.Email);
-        var roles = user is null ? new List<string>() : (await _userManager.GetRolesAsync(user));
-
-        var generatedToken = new GenerateJwtToken();
-        var token = generatedToken.GenerateToken("", courier.Id.ToString(), roles);
-        return Ok(new { token });
+        return Ok(courier);
     }
 
     [AllowAnonymous]
